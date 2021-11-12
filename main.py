@@ -83,7 +83,7 @@ def run_pipes(command):
         os.execvp(command[1][0], command[1])
         sys.exit()
     os.wait()
-
+    os.remove('temp')
 
 if __name__ == '__main__':
     shell()
