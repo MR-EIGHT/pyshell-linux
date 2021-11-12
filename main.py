@@ -15,12 +15,14 @@ class BColors:
     UNDERLINE = '\033[4m'
 
 
-def main():
+def shell():
     last_command = None
     while True:
         command = input(
             BColors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + BColors.ENDC + BColors.OKGREEN + os.getcwd() + BColors.ENDC + " > $").strip().split()
-        if command[0] == "!!":
+        if '|' in command:
+            run_pipes(" ".join(command))
+        elif command[0] == "!!":
             if last_command is None:
                 print(BColors.FAIL + "There is no previous command to execute!" + BColors.ENDC)
             else:
@@ -44,13 +46,13 @@ def run_command(command):
             if ">" in command:
                 with open(command[command.index(">") + 1], 'w') as rd_output:
                     os.dup2(rd_output.fileno(), sys.stdout.fileno())
-                    del command[command.index(">")+1]
+                    del command[command.index(">") + 1]
                     del command[command.index(">")]
 
             if "<" in command:
                 with open(command[command.index("<") + 1], 'r') as rd_input:
                     os.dup2(rd_input.fileno(), sys.stdin.fileno())
-                    del command[command.index("<")+1]
+                    del command[command.index("<") + 1]
                     del command[command.index("<")]
 
             os.execvp(command[0], args=command)
@@ -59,5 +61,29 @@ def run_command(command):
             os.waitpid(child, 0)
 
 
+def run_pipes(command):
+    command = command.split('|')
+    command = [com.strip().split() for com in command]
+    read0, write0 = os.pipe()
+    child1 = os.fork()
+    if child1 == 0:
+        #os.close(read0)
+        with open('temp', 'w') as rd_output:
+            os.dup2(rd_output.fileno(), sys.stdout.fileno())
+        #os.dup2(sys.stdout.fileno(),write0)
+        os.execvp(command[0][0], args=command[0])
+        sys.exit(0)
+    os.wait()
+    child2 = os.fork()
+    if child2 == 0:
+            #os.dup2(sys.stdin.fileno(),read0)
+            #os.close(write0)
+        with open('temp', 'r') as rd_input:
+            os.dup2(rd_input.fileno(), sys.stdin.fileno())
+        os.execvp(command[1][0], command[1])
+        sys.exit()
+    os.wait()
+
+
 if __name__ == '__main__':
-    main()
+    shell()
