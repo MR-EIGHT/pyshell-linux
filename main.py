@@ -20,7 +20,9 @@ def shell():
     while True:
         command = input(
             BColors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + BColors.ENDC + BColors.OKGREEN + os.getcwd() + BColors.ENDC + " > $").strip().split()
-        if '|' in command:
+        if command[0] == 'exit':
+            sys.exit(1)
+        elif '|' in command:
             run_pipes(" ".join(command))
         elif command[0] == "!!":
             if last_command is None:
