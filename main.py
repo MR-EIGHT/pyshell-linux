@@ -41,11 +41,13 @@ def run_command(command):
     if command[0] == 'cd':
         try:
             os.chdir(command[1])
-        except FileNotFoundError as e:
-            raise e
+        except FileNotFoundError:
+            print(BColors.FAIL + "There is no such directory!" + BColors.ENDC)
 
     else:
         child = os.fork()
+        if child < 0:
+            raise Exception("Couldn't fork a child process!")
         if child == 0:
             if ">" in command:
                 with open(command[command.index(">") + 1], 'w') as rd_output:
@@ -58,8 +60,11 @@ def run_command(command):
                     os.dup2(rd_input.fileno(), sys.stdin.fileno())
                     del command[command.index("<") + 1]
                     del command[command.index("<")]
+            try:
+                os.execvp(command[0], args=command)
+            except FileNotFoundError:
+                print(BColors.FAIL + "There is no such File or Directory!" + BColors.ENDC)
 
-            os.execvp(command[0], args=command)
             sys.exit(0)
         if not conc_flag:
             os.waitpid(child, 0)
@@ -68,7 +73,7 @@ def run_command(command):
 def run_pipes(command):
     command = command.split('|')
     command = [com.strip().split() for com in command]
-    read0, write0 = os.pipe()
+
     child1 = os.fork()
     if child1 < 0:
         raise Exception("Couldn't fork a child process!")
