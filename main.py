@@ -3,7 +3,7 @@ import sys
 import platform
 
 
-class BColors:
+class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -15,18 +15,21 @@ class BColors:
     UNDERLINE = '\033[4m'
 
 
+fork_exception = Exception("Couldn't fork a child process!")
+
+
 def shell():
     last_command = None
     while True:
         command = input(
-            BColors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + BColors.ENDC + BColors.OKGREEN + os.getcwd() + BColors.ENDC + " > $").strip().split()
+            Colors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + Colors.ENDC + Colors.OKGREEN + os.getcwd() + Colors.ENDC + " > $").strip().split()
         if command[0] == 'exit':
             sys.exit(1)
         elif '|' in command:
             run_pipes(" ".join(command))
         elif command[0] == "!!":
             if last_command is None:
-                print(BColors.FAIL + "There is no previous command to execute!" + BColors.ENDC)
+                print(Colors.FAIL + "There is no previous command to execute!" + Colors.ENDC)
             else:
                 run_command(last_command)
 
@@ -36,7 +39,7 @@ def shell():
 
 
 def run_command(command):
-    conc_flag = True if command[-1] == '&' else False
+    conc_flag = command[-1] == '&'
 
     if command[-1] == '&':
         del command[-1]
@@ -44,12 +47,12 @@ def run_command(command):
         try:
             os.chdir(command[1])
         except FileNotFoundError:
-            print(BColors.FAIL + "There is no such directory!" + BColors.ENDC)
+            print(Colors.FAIL + "There is no such directory!" + Colors.ENDC)
 
     else:
         child = os.fork()
         if child < 0:
-            raise Exception("Couldn't fork a child process!")
+            raise fork_exception
         if child == 0:
             if ">" in command:
                 with open(command[command.index(">") + 1], 'w') as rd_output:
@@ -65,7 +68,7 @@ def run_command(command):
             try:
                 os.execvp(command[0], args=command)
             except FileNotFoundError:
-                print(BColors.FAIL + "There is no such File or Directory!" + BColors.ENDC)
+                print(Colors.FAIL + "There is no such File or Directory!" + Colors.ENDC)
 
             sys.exit(0)
         if not conc_flag:
@@ -78,7 +81,7 @@ def run_pipes(command):
 
     child1 = os.fork()
     if child1 < 0:
-        raise Exception("Couldn't fork a child process!")
+        raise fork_exception
     elif child1 == 0:
         with open('temp', 'w') as rd_output:
             os.dup2(rd_output.fileno(), sys.stdout.fileno())
@@ -87,7 +90,7 @@ def run_pipes(command):
     os.wait()
     child2 = os.fork()
     if child2 < 0:
-        raise Exception("Couldn't fork a child process!")
+        raise fork_exception
     elif child2 == 0:
         with open('temp', 'r') as rd_input:
             os.dup2(rd_input.fileno(), sys.stdin.fileno())
