@@ -1,6 +1,6 @@
 import os
-import sys
 import platform
+import sys
 
 
 class Colors:
@@ -97,29 +97,53 @@ def run_command(command):
     """
 
 
-def run_pipes(command):
+def run_pipes(command, flag="pipe"):
     command = command.split('|')
     command = [com.strip().split() for com in command]
 
-    child1 = os.fork()
-    if child1 < 0:
-        raise fork_exception
-    elif child1 == 0:
-        with open('temp', 'w') as rd_output:
-            os.dup2(rd_output.fileno(), sys.stdout.fileno())
-        os.execvp(command[0][0], args=command[0])
-        sys.exit(0)
-    os.wait()
-    child2 = os.fork()
-    if child2 < 0:
-        raise fork_exception
-    elif child2 == 0:
-        with open('temp', 'r') as rd_input:
-            os.dup2(rd_input.fileno(), sys.stdin.fileno())
-        os.execvp(command[1][0], command[1])
-        sys.exit()
-    os.wait()
-    os.remove('temp')
+    match flag:
+
+        case "pipe":
+            child1 = os.fork()
+            if child1 < 0:
+                raise fork_exception
+            elif child1 == 0:
+                oread, owrite = os.pipe()
+                child2 = os.fork()
+                if child2 > 0:
+                    os.close(owrite)
+                    os.dup2(oread, sys.stdin.fileno())
+                    os.dup2(oread, sys.stderr.fileno())
+                    os.execvp(command[1][0], args=command[1])
+                if child2 < 0:
+                    raise fork_exception
+                elif child2 == 0:
+                    os.close(oread)
+                    os.dup2(owrite, sys.stdout.fileno())
+                    os.execvp(command[0][0], command[0])
+                    sys.exit()
+            os.wait()
+
+        case "file":
+            child1 = os.fork()
+            if child1 < 0:
+                raise fork_exception
+            elif child1 == 0:
+                with open('temp', 'w') as rd_output:
+                    os.dup2(rd_output.fileno(), sys.stdout.fileno())
+                os.execvp(command[0][0], args=command[0])
+                sys.exit(0)
+            os.wait()
+            child2 = os.fork()
+            if child2 < 0:
+                raise fork_exception
+            elif child2 == 0:
+                with open('temp', 'r') as rd_input:
+                    os.dup2(rd_input.fileno(), sys.stdin.fileno())
+                os.execvp(command[1][0], command[1])
+                sys.exit()
+            os.wait()
+            os.remove('temp')
 
 
 # Deriver code
