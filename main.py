@@ -7,7 +7,7 @@ A simple shell implemented for Unix-like operating systems, in python.
 
 Requirements:
 A Unix-like OS.
-python > 3.9.6
+python >= 3.10 :)
 
 """
 
