@@ -8,6 +8,7 @@ class Colors:
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     ENDC = '\033[0m'
+
     # Other colors commented for later developements...
 
     # OKCYAN = '\033[96m'
@@ -22,30 +23,39 @@ fork_exception = Exception("Couldn't fork a child process!")
 
 def shell():
     run_command(["clear"])  # Clear the terminal
-    last_command = None
-    while True:
+    last_command = None  # last_command keeps the last entered command. It's used to implement history functionality.
+    while True:  # An infinite loop that keeps repeating until the user enters "exit" or some exception occur.
         command = input(
             Colors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + Colors.ENDC + Colors.OKGREEN + os.getcwd() + Colors.ENDC + " > $").strip().split()
+        # Covering exit functionality.
         if command[0] == 'exit':
             sys.exit(1)
+        # Tokenize piped commands
         elif '|' in command:
             run_pipes(" ".join(command))
+        # Command history that keeps the last executed command.
         elif command[0] == "!!":
             if last_command is None:
                 print(Colors.FAIL + "There is no previous command to execute!" + Colors.ENDC)
             else:
                 run_command(last_command)
-
+        # If none of the above conditions is met, then we have a regular Unix-Command to process.
         else:
             last_command = command.copy()
             run_command(command)
 
 
-def run_command(command):
-    conc_flag = command[-1] == '&'
+"""
+Function that processes regular commands and redirection.
+"""
 
+
+def run_command(command):
+    # If the entered command contains "&" the concurrency flag set to be true and the "&" gets deleted from the command.
+    conc_flag = command[-1] == '&'
     if command[-1] == '&':
         del command[-1]
+    # Covers ChangeDirectory or cd command.
     if command[0] == 'cd':
         try:
             os.chdir(command[1])
@@ -57,6 +67,7 @@ def run_command(command):
         if child < 0:
             raise fork_exception
         if child == 0:
+            # If there is a ">" or "<" in command, thre is a redirection to process.
             if ">" in command:
                 with open(command[command.index(">") + 1], 'w') as rd_output:
                     os.dup2(rd_output.fileno(), sys.stdout.fileno())
@@ -74,8 +85,16 @@ def run_command(command):
                 print(Colors.FAIL + "There is no such File or Directory!" + Colors.ENDC)
 
             sys.exit(0)
+        # if concurrency flag is false then the parent has to wait for the child to finish and call wait() syscall
+        # otherwise, it's neglected and parent continues to work while the child is working separately.
         if not conc_flag:
             os.waitpid(child, 0)
+
+    """
+    Function for processing piped commands in two different ways:
+    1- using pipe() system call.
+    2- using a temp file.
+    """
 
 
 def run_pipes(command):
@@ -103,5 +122,6 @@ def run_pipes(command):
     os.remove('temp')
 
 
+# Deriver code
 if __name__ == '__main__':
     shell()
