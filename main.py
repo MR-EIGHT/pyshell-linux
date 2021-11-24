@@ -36,7 +36,7 @@ def shell():
     last_command = None  # last_command keeps the last entered command. It's used to implement history functionality.
     while True:  # An infinite loop that keeps repeating until the user enters "exit" or some exception occur.
         command = input(Colors.BOLD +
-            Colors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + Colors.ENDC + Colors.OKGREEN + os.getcwd() + Colors.ENDC + " > $" + Colors.ENDC).strip().split()
+                        Colors.OKBLUE + '(' + os.getlogin() + '@' + platform.system() + ')' + Colors.ENDC + Colors.OKGREEN + os.getcwd() + Colors.ENDC + " > $" + Colors.ENDC).strip().split()
         # Covering exit functionality.
         if command[0] == 'exit':
             sys.exit(1)
