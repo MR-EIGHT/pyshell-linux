@@ -2,6 +2,18 @@ import os
 import platform
 import sys
 
+"""
+A simple shell implemented for Unix-like operating systems, in python.
+
+Requirements:
+A Unix-like OS.
+python > 3.9.6
+
+"""
+
+
+# Printing colorful texts in terminal using ANSI escape sequences.
+# Wrapped in a class for simplification, ease of use and understanding.
 
 class Colors:
     OKBLUE = '\033[94m'
@@ -10,7 +22,6 @@ class Colors:
     ENDC = '\033[0m'
 
     # Other colors commented for later developements...
-
     # OKCYAN = '\033[96m'
     # HEADER = '\033[95m'
     # FAIL = '\033[91m'
@@ -102,33 +113,41 @@ def run_pipes(command, flag="pipe"):
     command = [com.strip().split() for com in command]
 
     match flag:
-
+        # In case we want to use pipe syscall.
         case "pipe":
             child1 = os.fork()
             if child1 < 0:
+                # Ecception occured.
                 raise fork_exception
             elif child1 == 0:
+                # In child process
                 oread, owrite = os.pipe()
                 child2 = os.fork()
                 if child2 > 0:
+                    # In parent process
                     os.close(owrite)
                     os.dup2(oread, sys.stdin.fileno())
                     os.dup2(oread, sys.stderr.fileno())
                     os.execvp(command[1][0], args=command[1])
                 if child2 < 0:
+                    # Ecception occured.
                     raise fork_exception
                 elif child2 == 0:
+                    # In the second child process. (child of "child1")
                     os.close(oread)
                     os.dup2(owrite, sys.stdout.fileno())
                     os.execvp(command[0][0], command[0])
                     sys.exit()
             os.wait()
 
+        # In case we want to use a temp file for piping.
         case "file":
             child1 = os.fork()
             if child1 < 0:
+                # Ecception occured.
                 raise fork_exception
             elif child1 == 0:
+                # In first-child process
                 with open('temp', 'w') as rd_output:
                     os.dup2(rd_output.fileno(), sys.stdout.fileno())
                 os.execvp(command[0][0], args=command[0])
@@ -136,8 +155,10 @@ def run_pipes(command, flag="pipe"):
             os.wait()
             child2 = os.fork()
             if child2 < 0:
+                # Ecception occured.
                 raise fork_exception
             elif child2 == 0:
+                # In second-child process
                 with open('temp', 'r') as rd_input:
                     os.dup2(rd_input.fileno(), sys.stdin.fileno())
                 os.execvp(command[1][0], command[1])
