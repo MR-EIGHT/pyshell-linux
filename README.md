@@ -15,7 +15,7 @@ Enter:
 ```
 python3.10 main.py
 ```
-both of '-' and ',' are ok!  
+ 
 
 If you want to run a command concurrently, follow the structure below:
 ```
