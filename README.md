@@ -2,7 +2,7 @@
 # pyshell-linux
 
 This is a simple shell in python for Unix-based systems.
-Implemented for Operating Systems' claas 
+Implemented for Operating Systems' claas.
 
 ## Shell 
 ![pyshell](shell-sc.png)
