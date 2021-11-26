@@ -42,13 +42,17 @@ def shell():
             sys.exit(1)
         # Tokenize piped commands
         elif '|' in command:
+            last_command = command.copy()
             run_pipes(" ".join(command))
         # Command history that keeps the last executed command.
         elif command[0] == "!!":
             if last_command is None:
                 print(Colors.FAIL + "There is no previous command to execute!" + Colors.ENDC)
             else:
-                run_command(last_command)
+                if '|' in last_command:
+                    run_pipes(" ".join(last_command))
+                else:
+                    run_command(last_command)
         # If none of the above conditions is met, then we have a regular Unix-Command to process.
         else:
             last_command = command.copy()
