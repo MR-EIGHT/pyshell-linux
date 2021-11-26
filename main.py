@@ -97,8 +97,14 @@ def run_command(command):
             sys.exit(0)
         # if concurrency flag is false then the parent has to wait for the child to finish and call wait() syscall
         # otherwise, it's neglected and parent continues to work while the child is working separately.
+
         if not conc_flag:
             os.waitpid(child, 0)
+
+        # starting a new thread that executes os.waitpid(); to prevent the child process become a zombie.
+        elif conc_flag:
+            import _thread as thread
+            thread.start_new_thread(os.waitpid, (child, 0))
 
     """
     Function for processing piped commands in two different ways:
@@ -108,6 +114,8 @@ def run_command(command):
 
 
 def run_pipes(command, flag="pipe"):
+    # command tokenizing section
+    # ls -ltrh | less -> [['ls', '-ltrh'], [less]]
     command = command.split('|')
     command = [com.strip().split() for com in command]
 
@@ -128,6 +136,8 @@ def run_pipes(command, flag="pipe"):
                     os.dup2(oread, sys.stdin.fileno())
                     os.dup2(oread, sys.stderr.fileno())
                     os.execvp(command[1][0], args=command[1])
+                    os.wait()
+                    sys.exit()
                 if child2 < 0:
                     # Ecception occured.
                     raise fork_exception
@@ -135,7 +145,7 @@ def run_pipes(command, flag="pipe"):
                     # In the second child process. (child of "child1")
                     os.close(oread)
                     os.dup2(owrite, sys.stdout.fileno())
-                    os.execvp(command[0][0], command[0])
+                    os.execvp(command[0][0], args=command[0])
                     sys.exit()
             os.wait()
 
