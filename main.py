@@ -1,6 +1,7 @@
 import os
 import platform
 import sys
+import _thread as thread
 
 """
 A simple shell implemented for Unix-like operating systems, in python.
@@ -107,7 +108,6 @@ def run_command(command):
 
         # starting a new thread that executes os.waitpid(); to prevent the child process become a zombie.
         elif conc_flag:
-            import _thread as thread
             thread.start_new_thread(os.waitpid, (child, 0))
 
     """
