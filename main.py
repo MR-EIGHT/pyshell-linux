@@ -60,12 +60,11 @@ def shell():
             run_command(command)
 
 
-"""
-Function that processes regular commands and redirection.
-"""
-
-
 def run_command(command):
+    """
+    Function that processes regular commands and redirection.
+    """
+
     # If the entered command contains "&" the concurrency flag set to be true and the "&" gets deleted from the command.
     conc_flag = command[-1] == '&'
     if command[-1] == '&':
@@ -110,14 +109,14 @@ def run_command(command):
         elif conc_flag:
             thread.start_new_thread(os.waitpid, (child, 0))
 
+
+def run_pipes(command, flag="pipe"):
     """
     Function for processing piped commands in two different ways:
     1- using pipe() system call.
     2- using a temp file.
     """
 
-
-def run_pipes(command, flag="pipe"):
     # command tokenizing section
     # ls -ltrh | less -> [['ls', '-ltrh'], [less]]
     command = command.split('|')
